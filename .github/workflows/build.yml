@@ -18,13 +18,35 @@ jobs:
       - name: Setup
         run: |
           npm init -y
-          npm i @capacitor/core@7 @capacitor/cli@7 @capacitor/android@7
+          npm i @capacitor/core@7 @capacitor/cli@7 @capacitor/android@7 @fontsource/cairo
           mkdir -p www
           cp "$(ls *.html | head -1)" www/index.html
           cat > capacitor.config.json <<'EOF'
           {"appId":"com.masrafk.app","appName":"Masrafk","webDir":"www","server":{"androidScheme":"https"}}
           EOF
           npx cap add android
+      - name: Fonts
+        run: |
+          python3 - <<'EOF'
+          import re, os, shutil
+          src = 'node_modules/@fontsource/cairo/files'
+          os.makedirs('www/fonts', exist_ok=True)
+          rng = {
+            'arabic': 'U+0600-06FF,U+0750-077F,U+0870-088E,U+0890-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC',
+            'latin': 'U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD'
+          }
+          css = ''
+          for w in (300, 400, 500, 600, 700):
+              for sub in ('arabic', 'latin'):
+                  f = f'cairo-{sub}-{w}-normal.woff2'
+                  shutil.copy(f'{src}/{f}', f'www/fonts/{f}')
+                  css += '@font-face{font-family:"Cairo";font-style:normal;font-weight:%d;font-display:block;src:url("fonts/%s") format("woff2");unicode-range:%s}' % (w, f, rng[sub])
+          css += '*{font-family:"Cairo",sans-serif !important}'
+          h = open('www/index.html', encoding='utf8').read()
+          h = re.sub(r'<link[^>]*fonts\.g[^>]*>', '', h)
+          h = h.replace('</head>', '<style>' + css + '</style></head>', 1)
+          open('www/index.html', 'w', encoding='utf8').write(h)
+          EOF
       - name: Icons
         run: |
           sudo apt-get install -y imagemagick
