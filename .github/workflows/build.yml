@@ -22,7 +22,7 @@ jobs:
           mkdir -p www
           cp "$(ls *.html | head -1)" www/index.html
           cat > capacitor.config.json <<'EOF'
-          {"appId":"com.masrafk.app","appName":"مصرفك","webDir":"www","server":{"androidScheme":"https"}}
+          {"appId":"com.masrafk.app","appName":"Masrafk","webDir":"www","server":{"androidScheme":"https"}}
           EOF
           npx cap add android
       - name: Icons
